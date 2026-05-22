@@ -53,12 +53,12 @@ export function ProductCard({ product }: ProductCardProps) {
       onClick={() => setSelectedProductId(product.id)}
       className="group bg-white rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-50 flex flex-col cursor-pointer transition-all duration-300"
     >
-      <div className="h-40 sm:h-48 w-full bg-gray-50 rounded-xl mb-4 flex items-center justify-center overflow-hidden relative border border-transparent group-hover:border-gray-100 transition-colors">
+      <div className="aspect-[4/5] w-full bg-white rounded-xl mb-4 flex items-center justify-center overflow-hidden relative border border-gray-100 group-hover:border-gray-200 transition-colors p-2">
         <motion.img 
           layoutId={`image-${product.id}`}
           src={product.image} 
           alt={product.name}
-          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
           loading="lazy"
         />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 pointer-events-none" />

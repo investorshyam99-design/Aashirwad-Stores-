@@ -7,7 +7,7 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 md:px-10 flex flex-col md:flex-row justify-between gap-10">
         <div className="flex flex-col space-y-4 max-w-xs">
           <div className="flex items-center space-x-2">
-            <img src="https://i.imgur.com/1FXXaKE.jpeg" alt="Aashirwad Stores Logo" className="w-8 h-8 md:w-10 md:h-10 object-contain bg-white rounded-md p-1 -mt-1" />
+            <img src="https://i.imgur.com/1FXXaKE.jpeg" alt="Aashirwad Stores Logo" className="w-8 h-8 md:w-10 md:h-10 object-contain bg-white rounded-md p-1 -mt-2" />
             <span className="text-sm font-semibold text-white">Aashirwad Stores</span>
           </div>
           <p className="text-xs text-gray-400 leading-relaxed">

@@ -59,12 +59,12 @@ export function ProductPage() {
       </div>
 
       <div className="flex flex-col md:flex-row gap-8 p-4 md:p-10 border-b border-gray-100">
-        <div className="w-full md:w-1/2 aspect-square bg-gray-50 rounded-2xl overflow-hidden relative">
+        <div className="w-full md:w-1/2 aspect-[4/5] sm:aspect-auto sm:h-[600px] bg-white border border-gray-100 rounded-2xl overflow-hidden relative p-4 flex flex-col items-center justify-center">
           <motion.img 
             layoutId={`image-${product.id}`}
             src={product.image} 
             alt={product.name}
-            className="w-full h-full object-cover object-center"
+            className="w-full h-full object-contain mix-blend-multiply"
           />
         </div>
 

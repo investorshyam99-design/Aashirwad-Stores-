@@ -57,8 +57,8 @@ export function Cart() {
               <div className="bg-white mt-2 shadow-sm">
                 {items.map((item, index) => (
                   <div key={item.id} className={cn("p-4 flex gap-4", index !== items.length - 1 && "border-b border-gray-100")}>
-                    <div className="w-24 h-24 bg-gray-50 rounded-md overflow-hidden shrink-0">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    <div className="w-20 h-24 bg-white border border-gray-100 rounded-md overflow-hidden shrink-0 flex items-center justify-center p-1">
+                      <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply" />
                     </div>
                     <div className="flex flex-col flex-1">
                       <div className="flex justify-between items-start">

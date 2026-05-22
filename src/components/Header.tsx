@@ -19,7 +19,7 @@ export function Header() {
           }}
           className="flex items-center space-x-3 cursor-pointer"
         >
-          <img src="https://i.imgur.com/1FXXaKE.jpeg" alt="Aashirwad Stores Logo" className="w-10 h-10 object-contain rounded-md -mt-1" />
+          <img src="https://i.imgur.com/1FXXaKE.jpeg" alt="Aashirwad Stores Logo" className="w-10 h-10 object-contain rounded-md -mt-2" />
           <span className="text-xl font-semibold tracking-tight text-black">
             Aashirwad Stores
           </span>
