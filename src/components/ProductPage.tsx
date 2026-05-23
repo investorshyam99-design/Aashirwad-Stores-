@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ShoppingBag, CheckCircle2 } from 'lucide-react';
 import { useCartStore } from '../store/cart';
 import { useProductsStore } from '../store/products';
+import { useI18nStore } from '../store/i18n';
+import { getTranslation } from '../i18n/translations';
 import { ProductCard } from './ProductCard';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -22,6 +24,11 @@ export function ProductPage() {
 
   const cartItem = items.find(i => i.id === product.id);
   const displayQuantity = cartItem ? cartItem.quantity : localQuantity;
+  const language = useI18nStore(state => state.language);
+
+  const hasDiscount = product.mrp && product.price && product.mrp > product.price;
+  const savingsPercent = hasDiscount ? Math.round(((product.mrp! - product.price!) / product.mrp!) * 100) : 0;
+
 
   const handleQuantityChange = (amount: number) => {
     if (cartItem) {
@@ -70,7 +77,27 @@ export function ProductPage() {
 
         <div className="w-full md:w-1/2 flex flex-col justify-start pt-4 md:py-8">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{product.name}</h1>
-          {product.price && <p className="text-xl font-medium text-brand-blue mt-2">₹{product.price}</p>}
+          
+          <div className="mt-4">
+            {hasDiscount ? (
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500">{getTranslation(language, 'mrp')}</span>
+                  <span className="text-lg text-gray-400 line-through">₹{formatNumberIntl(product.mrp || 0, language)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-900 font-medium">{getTranslation(language, 'ourPrice')}</span>
+                  <span className="text-3xl font-bold text-brand-blue">₹{formatNumberIntl(product.price || 0, language)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-900 font-medium">{getTranslation(language, 'youSave')}</span>
+                  <span className="text-lg font-bold text-green-600">{formatNumberIntl(savingsPercent, language)}% (₹{formatNumberIntl((product.mrp || 0) - (product.price || 0), language)})</span>
+                </div>
+              </div>
+            ) : (
+              product.price && <p className="text-3xl font-bold text-brand-blue">₹{formatNumberIntl(product.price, language)}</p>
+            )}
+          </div>
           
           <div className="mt-8 flex flex-col sm:flex-row gap-4 items-center mb-8 md:mb-0">
             <div className="flex items-center justify-between p-1 border border-gray-200 rounded-xl w-full sm:w-32 bg-gray-50 shrink-0 h-14">
@@ -80,7 +107,7 @@ export function ProductPage() {
               >
                 -
               </button>
-              <span className="font-medium text-gray-900">{displayQuantity}</span>
+              <span className="font-medium text-gray-900">{formatNumberIntl(displayQuantity, language)}</span>
               <button 
                 onClick={() => handleQuantityChange(1)}
                 className="w-10 h-full flex items-center justify-center text-gray-500 hover:text-gray-900 transition-colors text-lg"
@@ -101,12 +128,12 @@ export function ProductPage() {
               {cartItem ? (
                 <>
                   <CheckCircle2 size={20} />
-                  View in Cart
+                  {getTranslation(language, 'cart')}
                 </>
               ) : (
                 <>
                   <ShoppingBag size={20} />
-                  Add {displayQuantity} to Cart
+                  {getTranslation(language, 'addToCart')}
                 </>
               )}
             </button>

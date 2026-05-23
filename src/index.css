@@ -7,6 +7,13 @@
   --color-brand-blue-hover: #003399;
   --color-brand-whatsapp: #25D366;
   --color-brand-green-hover: #20bd5c;
+  
+  --animate-marquee: marquee 60s linear infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
 }
 
 body {

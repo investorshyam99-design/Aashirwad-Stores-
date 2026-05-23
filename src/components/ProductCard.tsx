@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Product } from '../data/products';
 import { useCartStore } from '../store/cart';
+import { useI18nStore } from '../store/i18n';
+import { getTranslation, formatNumberIntl } from '../i18n/translations';
 import { motion } from 'motion/react';
 import { ShoppingBag, CheckCircle2 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -20,8 +22,12 @@ export function ProductCard({ product }: ProductCardProps) {
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
   const setCartOpen = useCartStore((state) => state.setCartOpen);
+  const language = useI18nStore(state => state.language);
 
   const displayQuantity = cartItem ? cartItem.quantity : localQuantity;
+
+  const hasDiscount = product.mrp && product.price && product.mrp > product.price;
+  const savingsPercent = hasDiscount ? Math.round(((product.mrp! - product.price!) / product.mrp!) * 100) : 0;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -65,7 +71,18 @@ export function ProductCard({ product }: ProductCardProps) {
       </div>
       
       <h3 className="font-medium text-sm text-gray-900 mt-1 flex-grow line-clamp-2 leading-snug">{product.name}</h3>
-      {product.price && <p className="text-sm font-semibold text-gray-900 mt-1">₹{product.price}</p>}
+      
+      {hasDiscount ? (
+        <div className="mt-1 flex flex-col">
+          <p className="text-xs text-gray-500 line-through">{getTranslation(language, 'mrp')} ₹{formatNumberIntl(product.mrp || 0, language)}</p>
+          <div className="flex items-center gap-1">
+            <p className="text-sm font-semibold text-gray-900">₹{formatNumberIntl(product.price || 0, language)}</p>
+            <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1 py-0.5 rounded border border-green-100">{formatNumberIntl(savingsPercent, language)}% OFF</span>
+          </div>
+        </div>
+      ) : (
+        product.price && <p className="text-sm font-semibold text-gray-900 mt-1">₹{formatNumberIntl(product.price, language)}</p>
+      )}
 
       <div className="mt-4 flex items-center justify-between gap-2 z-10 relative">
         <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden h-9 bg-white shrink-0">
@@ -76,7 +93,7 @@ export function ProductCard({ product }: ProductCardProps) {
           >
             -
           </button>
-          <span className="text-xs font-semibold w-5 sm:w-6 text-center text-black">{displayQuantity}</span>
+          <span className="text-xs font-semibold w-5 sm:w-6 text-center text-black">{formatNumberIntl(displayQuantity, language)}</span>
           <button 
             type="button"
             onClick={(e) => handleQuantityChange(e, 1)}
@@ -99,12 +116,12 @@ export function ProductCard({ product }: ProductCardProps) {
           {cartItem ? (
             <>
               <CheckCircle2 size={14} />
-              <span className="hidden sm:inline">Added</span>
+              <span className="hidden sm:inline">{getTranslation(language, 'cart')}</span>
             </>
           ) : (
             <>
               <ShoppingBag size={14} />
-              <span>Add</span>
+              <span>{getTranslation(language, 'addToCart')}</span>
             </>
           )}
         </button>

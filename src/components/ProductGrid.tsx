@@ -2,10 +2,13 @@ import React from 'react';
 import { ProductCard } from './ProductCard';
 import { useCartStore } from '../store/cart';
 import { useProductsStore } from '../store/products';
+import { useI18nStore } from '../store/i18n';
+import { getTranslation } from '../i18n/translations';
 
 export function ProductGrid() {
   const searchQuery = useCartStore(state => state.searchQuery);
   const { products, isLoading, error } = useProductsStore();
+  const language = useI18nStore(state => state.language);
 
   const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -31,7 +34,7 @@ export function ProductGrid() {
           </div>
           {filteredProducts.length === 0 && (
             <div className="text-center py-20 text-gray-500">
-              No products found matching "{searchQuery}"
+              {getTranslation(language, 'noProductsFound')} "{searchQuery}"
             </div>
           )}
         </>

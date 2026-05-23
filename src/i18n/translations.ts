@@ -1,0 +1,113 @@
+export const translations = {
+  en: {
+    websiteName: "Aashirwad Stores",
+    websiteNameLine1: "AASHIRWAD",
+    websiteNameLine2: "STORES",
+    searchPlaceholder: "Search for groceries, household items...",
+    cart: "Cart",
+    emptyCart: "Your cart is empty",
+    addItemsToCart: "Add some items to your cart to see them here.",
+    continueShopping: "Continue Shopping",
+    subtotal: "Subtotal",
+    orderViaWhatsapp: "Checkout via WhatsApp",
+    addToCart: "Add to Cart",
+    mrp: "MRP:",
+    ourPrice: "Our Price:",
+    youSave: "You Save:",
+    noProductsFound: "No products found matching",
+    aboutUs: "About Us",
+    contactUs: "Contact",
+    allRightsReserved: "All rights reserved.",
+    orderMessage: "Hello Aashirwad Stores, I want to order these items:",
+    totalAmount: "Total Amount:",
+    productDetails: "Product Details",
+    remove: "Remove",
+    items: "items",
+    footerDescription: "Your trusted neighborhood general store bringing premium quality daily essentials right to your WhatsApp.",
+    whatsappUs: "WhatsApp Us",
+    address: "Address",
+    addressValue: "Kunjirwadi, Pune",
+    qty: "Qty",
+    price: "Price",
+    phone: "Phone",
+    mrpLabelInMessage: "MRP"
+  },
+  hi: {
+    websiteName: "आशीर्वाद स्टोर्स",
+    websiteNameLine1: "आशीर्वाद",
+    websiteNameLine2: "स्टोर्स",
+    searchPlaceholder: "किराने का सामान, घरेलू सामान खोजें...",
+    cart: "कार्ट",
+    emptyCart: "आपका कार्ट खाली है",
+    addItemsToCart: "अपने कार्ट में सामान जोड़ें।",
+    continueShopping: "खरेदी जारी रखें",
+    subtotal: "कुल योग",
+    orderViaWhatsapp: "WhatsApp से चेकआउट करें",
+    addToCart: "कार्ट में जोड़ें",
+    mrp: "एमआरपी:",
+    ourPrice: "हमारी कीमत:",
+    youSave: "आप बचाते हैं:",
+    noProductsFound: "कोई उत्पाद नहीं मिला",
+    aboutUs: "हमारे बारे में",
+    contactUs: "संपर्क करें",
+    allRightsReserved: "सर्वाधिकार सुरक्षित।",
+    orderMessage: "नमस्ते आशीर्वाद स्टोर्स, मैं इन चीजों का ऑर्डर देना चाहता हूं:",
+    totalAmount: "कुल राशि:",
+    productDetails: "उत्पाद विवरण",
+    remove: "निकालें",
+    items: "आइटम",
+    footerDescription: "आपका भरोसेमंद आस-पड़ोस का जनरल स्टोर, जो आपको आपके WhatsApp पर प्रीमियम गुणवत्ता की रोज़मर्रा की चीज़ें प्रदान करता है।",
+    whatsappUs: "हमें WhatsApp करें",
+    address: "पता",
+    addressValue: "कुंजीरवाड़ी, पुणे",
+    qty: "मात्रा",
+    price: "कीमत",
+    phone: "फ़ोन नंबर",
+    mrpLabelInMessage: "एमआरपी"
+  },
+  mr: {
+    websiteName: "आशीर्वाद स्टोर्स",
+    websiteNameLine1: "आशीर्वाद",
+    websiteNameLine2: "स्टोर्स",
+    searchPlaceholder: "किराणा आणि घरगुती वस्तू शोधा...",
+    cart: "कार्ट",
+    emptyCart: "तुमचे कार्ट रिकामे आहे",
+    addItemsToCart: "तुमच्या कार्टमध्ये काही वस्तू जोडा.",
+    continueShopping: "खरेदी सुरू ठेवा",
+    subtotal: "एकूण",
+    orderViaWhatsapp: "WhatsApp द्वारे चेकआउट करा",
+    addToCart: "कार्टमध्ये जोडा",
+    mrp: "एमआरपी:",
+    ourPrice: "आमची किंमत:",
+    youSave: "तुमची बचत:",
+    noProductsFound: "कोणतीही उत्पादने आढळली नाहीत",
+    aboutUs: "आमच्याबद्दल",
+    contactUs: "संपर्क",
+    allRightsReserved: "सर्व हक्क राखीव.",
+    orderMessage: "नमस्कार आशीर्वाद स्टोर्स, मला या वस्तूंची ऑर्डर द्यायची आहे:",
+    totalAmount: "एकूण रक्कम:",
+    productDetails: "उत्पादनाचे तपशील",
+    remove: "काढून टाका",
+    items: "वस्तू",
+    footerDescription: "तुमचे विश्वासू परिसरातील जनरल स्टोअर, जे तुम्हाला प्रीमियम दर्जाच्या दैनंदिन वस्तू थेट तुमच्या WhatsApp वर आणून देते.",
+    whatsappUs: "आम्हाला WhatsApp करा",
+    address: "पत्ता",
+    addressValue: "कुंजीरवाडी, पुणे",
+    qty: "प्रमाण",
+    price: "किंमत",
+    phone: "फोन नंबर",
+    mrpLabelInMessage: "एमआरपी"
+  }
+};
+
+export type TranslationKey = keyof typeof translations.en;
+
+export function getTranslation(lang: 'en' | 'hi' | 'mr', key: TranslationKey): string {
+  return translations[lang][key] || translations['en'][key];
+}
+
+export function formatNumberIntl(num: number | string, lang: 'en' | 'hi' | 'mr'): string {
+  if (lang === 'en') return String(num);
+  const digits = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+  return String(num).replace(/[0-9]/g, w => digits[parseInt(w, 10)]);
+}

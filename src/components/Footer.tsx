@@ -1,14 +1,17 @@
 import React from 'react';
 import { MessageCircle } from 'lucide-react';
+import { useI18nStore } from '../store/i18n';
+import { getTranslation } from '../i18n/translations';
 
 export function Footer() {
+  const language = useI18nStore(state => state.language);
   return (
     <footer className="bg-black py-12 mt-10">
       <div className="max-w-7xl mx-auto px-4 md:px-10 flex flex-col md:flex-row justify-between gap-10">
         <div className="flex flex-col space-y-4 max-w-xs">
           <div className="flex items-center space-x-2">
             <img src="https://i.imgur.com/1FXXaKE.jpeg" alt="Aashirwad Stores Logo" className="w-8 h-8 md:w-10 md:h-10 object-contain bg-white rounded-md p-1 -mt-2" />
-            <span className="text-sm font-semibold text-white">Aashirwad Stores</span>
+            <span className="text-sm font-semibold text-white">{getTranslation(language, 'websiteName')}</span>
           </div>
           <p className="text-xs text-gray-400 leading-relaxed">
             Your trusted neighborhood general store bringing premium quality daily essentials right to your WhatsApp.
