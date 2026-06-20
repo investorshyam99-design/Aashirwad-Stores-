@@ -1,36 +1,81 @@
 import React, { useState } from 'react';
 import { ShoppingCart, Search, Menu, X, Globe } from 'lucide-react';
 import { useCartStore } from '../store/cart';
+import { useUIStore } from '../store/ui';
 import { useI18nStore, Language } from '../store/i18n';
+import { useAuthStore } from '../store/auth';
 import { getTranslation, formatNumberIntl } from '../i18n/translations';
 
 export function Header() {
-  const { totalItems, setCartOpen, searchQuery, setSearchQuery, selectedProductId, setSelectedProductId } = useCartStore();
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const { items, setCartOpen, searchQuery, setSearchQuery, selectedProductId, setSelectedProductId } = useCartStore();
+  const { isSearchOpen, setIsSearchOpen, setActiveTab } = useUIStore();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { language, setLanguage } = useI18nStore();
+  const { user, login, logout, isAdmin } = useAuthStore();
 
   return (
     <header className="sticky top-0 z-50 h-20 flex items-center justify-between px-4 md:px-10 bg-white border-b border-gray-100">
       <div className="flex items-center space-x-3">
-        <button className="md:hidden p-2 text-gray-600 hover:text-brand-blue transition-colors">
-          <Menu size={24} />
-        </button>
+        <div className="relative">
+          <button 
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="p-2 text-gray-600 hover:text-brand-blue transition-colors rounded-full flex items-center"
+          >
+            <Menu size={24} />
+          </button>
+          
+          {isMenuOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)}></div>
+              <div className="absolute left-0 mt-2 w-48 bg-white rounded-md flex flex-col overflow-hidden shadow-lg border border-gray-100 z-50">
+                {user ? (
+                  <>
+                    <div className="px-4 py-3 border-b border-gray-100 flex flex-col items-start mt-2">
+                      {user.photoURL && (
+                        <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full mb-2" />
+                      )}
+                      <p className="text-sm font-medium text-gray-900 truncate w-full">{user.displayName || 'User'}</p>
+                      <p className="text-xs text-gray-500 truncate w-full">{user.email}</p>
+                    </div>
+                    {isAdmin && (
+                      <div className="px-4 py-2 text-xs font-semibold text-brand-blue bg-blue-50 border-b border-gray-100">
+                        Admin Account
+                      </div>
+                    )}
+                    <button 
+                      onClick={() => {
+                        logout();
+                        setIsMenuOpen(false);
+                      }}
+                      className="px-4 py-3 text-sm text-left text-red-600 hover:bg-gray-50 font-medium transition-colors"
+                    >
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <button 
+                    onClick={() => {
+                      login();
+                      setIsMenuOpen(false);
+                    }}
+                    className="px-4 py-3 text-sm text-left text-brand-blue hover:bg-gray-50 font-medium transition-colors"
+                  >
+                    Login
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
         <div 
           onClick={() => {
             setSelectedProductId(null);
             setSearchQuery('');
           }}
-          className="flex items-center space-x-3 cursor-pointer"
+          className="flex items-center cursor-pointer"
         >
-          <img src="https://i.imgur.com/1FXXaKE.jpeg" alt="Aashirwad Stores Logo" className="w-10 h-10 object-contain rounded-md -mt-1.5" />
-          <div className="flex flex-col justify-center">
-            <span className="text-base sm:text-lg font-bold tracking-tight text-gray-900 uppercase leading-none">
-              {getTranslation(language, 'websiteNameLine1')}
-            </span>
-            <span className="text-[11px] sm:text-[13px] font-semibold tracking-widest text-brand-blue uppercase leading-tight mt-0.5">
-              {getTranslation(language, 'websiteNameLine2')}
-            </span>
-          </div>
+          <img src="https://i.imgur.com/1FXXaKE.jpeg" alt="Logo" className="w-10 h-10 object-contain rounded-md" />
         </div>
       </div>
 
@@ -87,18 +132,20 @@ export function Header() {
         </div>
 
         {!isSearchOpen && (
-          <div className="relative">
-            <button 
-              onClick={() => setCartOpen(true)}
-              className="p-2 hover:bg-gray-50 rounded-full transition-colors"
-            >
-              <ShoppingCart size={24} className="text-brand-blue" />
-            </button>
-            {totalItems() > 0 && (
-              <span className="absolute top-0 right-0 bg-brand-blue text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
-                {formatNumberIntl(totalItems(), language)}
-              </span>
-            )}
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <button 
+                onClick={() => setCartOpen(true)}
+                className="p-2 hover:bg-gray-50 rounded-full transition-colors"
+              >
+                <ShoppingCart size={24} className="text-brand-blue" />
+              </button>
+              {items.length > 0 && (
+                <span className="absolute top-0 right-0 bg-brand-blue text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
+                  {formatNumberIntl(items.length, language)}
+                </span>
+              )}
+            </div>
           </div>
         )}
       </div>

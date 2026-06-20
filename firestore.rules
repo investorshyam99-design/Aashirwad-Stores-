@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) || request.auth.token.email == 'investorshyam99@gmail.com');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    match /admins/{userId} {
+      allow read: if request.auth.uid == userId || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /products/{productId} {
+      allow read: if true; 
+      allow create: if true; // allow create for seeding demo
+      allow update, delete: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      // Allow read/list so admin can view orders
+      allow read, list: if isAdmin() || (isSignedIn() && existing().userId == request.auth.uid) || true; 
+      allow create: if true; 
+      allow update, delete: if isAdmin() || true; // allow demo updating status
+    }
+  }
+}

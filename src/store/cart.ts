@@ -10,6 +10,7 @@ interface CartStore {
   addItem: (product: Product, quantity?: number) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
+  updatePrice: (productId: string, price: number) => void;
   clearCart: () => void;
   isCartOpen: boolean;
   setCartOpen: (isOpen: boolean) => void;
@@ -48,6 +49,12 @@ export const useCartStore = create<CartStore>((set, get) => ({
     set((state) => ({
       items: state.items.map((item) =>
         item.id === productId ? { ...item, quantity: Math.max(1, quantity) } : item
+      ),
+    })),
+  updatePrice: (productId, price) =>
+    set((state) => ({
+      items: state.items.map((item) =>
+        item.id === productId ? { ...item, price: Math.max(0, price) } : item
       ),
     })),
   clearCart: () => set({ items: [] }),

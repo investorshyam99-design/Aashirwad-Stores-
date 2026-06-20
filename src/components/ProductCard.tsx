@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Product } from '../data/products';
 import { useCartStore } from '../store/cart';
 import { useI18nStore } from '../store/i18n';
+import { useAuthStore } from '../store/auth';
 import { getTranslation, formatNumberIntl } from '../i18n/translations';
 import { motion } from 'motion/react';
 import { ShoppingBag, CheckCircle2 } from 'lucide-react';
@@ -23,6 +24,10 @@ export function ProductCard({ product }: ProductCardProps) {
   const removeItem = useCartStore((state) => state.removeItem);
   const setCartOpen = useCartStore((state) => state.setCartOpen);
   const language = useI18nStore(state => state.language);
+  const isAdmin = useAuthStore(state => state.isAdmin);
+
+  const [isEditingQty, setIsEditingQty] = useState(false);
+  const [tempQty, setTempQty] = useState('');
 
   const displayQuantity = cartItem ? cartItem.quantity : localQuantity;
 
@@ -52,52 +57,88 @@ export function ProductCard({ product }: ProductCardProps) {
     }
   };
 
+  const handleQtyInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    setIsEditingQty(false);
+    const parsed = parseInt(tempQty, 10);
+    if (!isNaN(parsed) && parsed > 0) {
+      if (cartItem) {
+        updateQuantity(product.id, parsed);
+      } else {
+        setLocalQuantity(parsed);
+      }
+    } else if (parsed === 0 && cartItem) {
+      removeItem(product.id);
+    }
+  };
+
+  const handleQtyInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    if (e.key === 'Enter') {
+      e.currentTarget.blur();
+    }
+  };
+
   return (
     <motion.div 
       layoutId={`card-${product.id}`}
-      whileHover={{ y: -4 }}
       onClick={() => setSelectedProductId(product.id)}
-      className="group bg-white rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-50 flex flex-col cursor-pointer transition-all duration-300"
+      className="group bg-white rounded-lg p-3 shadow-sm border border-gray-100 flex items-center justify-between gap-3 cursor-pointer hover:bg-gray-50 transition-colors"
     >
-      <div className="aspect-[4/5] w-full bg-white rounded-xl mb-4 flex items-center justify-center overflow-hidden relative border border-gray-100 group-hover:border-gray-200 transition-colors p-2">
-        <motion.img 
-          layoutId={`image-${product.id}`}
-          src={product.image} 
-          alt={product.name}
-          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
-          loading="lazy"
-        />
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 pointer-events-none" />
+      <div className="flex-1 min-w-0">
+        <h3 className="font-semibold text-[15px] text-gray-900 truncate pr-2 leading-tight">{product.name}</h3>
+        {isAdmin && (
+          hasDiscount ? (
+            <div className="flex items-center gap-1 mt-0.5">
+              <span className="text-xs text-gray-500 line-through">₹{formatNumberIntl(product.mrp || 0, language)}</span>
+              <p className="text-sm font-semibold text-gray-900">₹{formatNumberIntl(product.price || 0, language)}</p>
+              <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1 py-0.5 rounded border border-green-100">{formatNumberIntl(savingsPercent, language)}% OFF</span>
+            </div>
+          ) : (
+            product.price && <p className="text-sm font-semibold text-gray-900 mt-0.5">₹{formatNumberIntl(product.price, language)}</p>
+          )
+        )}
       </div>
-      
-      <h3 className="font-medium text-sm text-gray-900 mt-1 flex-grow line-clamp-2 leading-snug">{product.name}</h3>
-      
-      {hasDiscount ? (
-        <div className="mt-1 flex flex-col">
-          <p className="text-xs text-gray-500 line-through">{getTranslation(language, 'mrp')} ₹{formatNumberIntl(product.mrp || 0, language)}</p>
-          <div className="flex items-center gap-1">
-            <p className="text-sm font-semibold text-gray-900">₹{formatNumberIntl(product.price || 0, language)}</p>
-            <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1 py-0.5 rounded border border-green-100">{formatNumberIntl(savingsPercent, language)}% OFF</span>
-          </div>
-        </div>
-      ) : (
-        product.price && <p className="text-sm font-semibold text-gray-900 mt-1">₹{formatNumberIntl(product.price, language)}</p>
-      )}
 
-      <div className="mt-4 flex items-center justify-between gap-2 z-10 relative">
-        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden h-9 bg-white shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center border border-gray-200 rounded-md overflow-hidden h-8 bg-white shrink-0 shadow-sm">
           <button 
             type="button"
             onClick={(e) => handleQuantityChange(e, -1)}
-            className="w-7 sm:w-8 h-full flex items-center justify-center text-gray-500 hover:text-black hover:bg-gray-50 transition-colors"
+            className="w-7 h-full flex items-center justify-center text-gray-500 hover:text-black hover:bg-gray-50 transition-colors bg-gray-50/50"
           >
             -
           </button>
-          <span className="text-xs font-semibold w-5 sm:w-6 text-center text-black">{formatNumberIntl(displayQuantity, language)}</span>
+          
+          {isEditingQty ? (
+            <input 
+              type="number"
+              min="0"
+              autoFocus
+              value={tempQty}
+              onChange={(e) => setTempQty(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              onBlur={handleQtyInputBlur}
+              onKeyDown={handleQtyInputKeyDown}
+              className="w-8 sm:w-10 text-center text-sm font-semibold text-black bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+          ) : (
+            <span 
+              onClick={(e) => {
+                e.stopPropagation();
+                setTempQty(displayQuantity.toString());
+                setIsEditingQty(true);
+              }}
+              className="cursor-pointer text-sm font-semibold px-1 min-w-[24px] sm:min-w-[32px] text-center text-black"
+            >
+              {formatNumberIntl(displayQuantity, language)}
+            </span>
+          )}
+
           <button 
             type="button"
             onClick={(e) => handleQuantityChange(e, 1)}
-            className="w-7 sm:w-8 h-full flex items-center justify-center text-gray-500 hover:text-black hover:bg-gray-50 transition-colors"
+            className="w-7 h-full flex items-center justify-center text-gray-500 hover:text-black hover:bg-gray-50 transition-colors bg-gray-50/50"
           >
             +
           </button>
@@ -107,22 +148,16 @@ export function ProductCard({ product }: ProductCardProps) {
           type="button"
           onClick={handleAddToCart}
           className={cn(
-            "flex-1 h-9 px-2 text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5",
+            "h-8 px-3 text-xs font-semibold rounded-md transition-all flex items-center justify-center shadow-sm min-w-[80px]",
             cartItem 
-              ? "bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/20 hover:bg-[#25D366]/20" 
-              : "bg-brand-blue text-white hover:bg-brand-blue-hover"
+              ? "bg-brand-blue/10 text-brand-blue border border-brand-blue/20 hover:bg-brand-blue/20" 
+              : "bg-brand-blue text-white hover:bg-brand-blue-hover hover:shadow"
           )}
         >
           {cartItem ? (
-            <>
-              <CheckCircle2 size={14} />
-              <span className="hidden sm:inline">{getTranslation(language, 'cart')}</span>
-            </>
+            <span>{getTranslation(language, 'cart')}</span>
           ) : (
-            <>
-              <ShoppingBag size={14} />
-              <span>{getTranslation(language, 'addToCart')}</span>
-            </>
+            <span>{getTranslation(language, 'addToCart')}</span>
           )}
         </button>
       </div>

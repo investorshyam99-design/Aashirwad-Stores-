@@ -1,0 +1,80 @@
+{
+  "entities": {
+    "admin": {
+      "title": "Admin",
+      "description": "Admin users",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "createdAt": { "type": "number", "description": "Timestamp" }
+      },
+      "required": ["email", "createdAt"]
+    },
+    "category": {
+      "title": "Category",
+      "description": "Product categories",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "image": { "type": "string" },
+        "order": { "type": "number" },
+        "createdAt": { "type": "number", "description": "Timestamp" }
+      },
+      "required": ["name", "createdAt"]
+    },
+    "product": {
+      "title": "Product",
+      "description": "Store products",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "categoryId": { "type": "string" },
+        "image": { "type": "string" },
+        "price": { "type": "number" },
+        "mrp": { "type": "number" },
+        "stock": { "type": "number" },
+        "unit": { "type": "string" },
+        "inStock": { "type": "boolean" },
+        "createdAt": { "type": "number", "description": "Timestamp" }
+      },
+      "required": ["name", "categoryId", "price", "createdAt"]
+    },
+    "order": {
+      "title": "Order",
+      "description": "Customer orders",
+      "type": "object",
+      "properties": {
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "customerAddress": { "type": "string" },
+        "items": { "type": "array", "items": { "type": "object" } },
+        "totalAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["new", "processing", "delivered", "fake", "cancelled", "pending_payment"] },
+        "paymentMethod": { "type": "string", "enum": ["cod", "upi", "razorpay"] },
+        "paymentStatus": { "type": "string", "enum": ["pending", "paid", "failed"] },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "number", "description": "Timestamp" },
+        "updatedAt": { "type": "number", "description": "Timestamp" }
+      },
+      "required": ["customerName", "items", "totalAmount", "status", "paymentMethod", "paymentStatus", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "admins/{userId}": {
+      "schema": { "$ref": "#/entities/admin" },
+      "description": "List of admin users."
+    },
+    "categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/category" },
+      "description": "List of categories."
+    },
+    "products/{productId}": {
+      "schema": { "$ref": "#/entities/product" },
+      "description": "List of products."
+    },
+    "orders/{orderId}": {
+      "schema": { "$ref": "#/entities/order" },
+      "description": "List of orders."
+    }
+  }
+}

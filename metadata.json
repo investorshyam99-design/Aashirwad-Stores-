@@ -1,6 +1,6 @@
 {
   "name": "Aashirwad Stores",
   "description": "A modern, premium, minimal eCommerce website for a general store named Aashirwad Stores.",
-  "requestFramePermissions": [],
-  "majorCapabilities": []
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -5,4 +5,8 @@ export type Product = {
   image: string;
   price?: number;
   mrp?: number;
+  categoryId?: string;
+  unit?: string;
+  stock?: number;
+  inStock?: boolean;
 };

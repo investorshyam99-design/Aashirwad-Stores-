@@ -3,7 +3,8 @@ import { ArrowLeft, ShoppingBag, CheckCircle2 } from 'lucide-react';
 import { useCartStore } from '../store/cart';
 import { useProductsStore } from '../store/products';
 import { useI18nStore } from '../store/i18n';
-import { getTranslation } from '../i18n/translations';
+import { useAuthStore } from '../store/auth';
+import { getTranslation, formatNumberIntl } from '../i18n/translations';
 import { ProductCard } from './ProductCard';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -12,9 +13,13 @@ export function ProductPage() {
   const { selectedProductId, setSelectedProductId, addItem, setCartOpen, items, updateQuantity, removeItem } = useCartStore();
   const { products } = useProductsStore();
   const [localQuantity, setLocalQuantity] = useState(1);
+  const [isEditingQty, setIsEditingQty] = useState(false);
+  const [tempQty, setTempQty] = useState('');
+  const isAdmin = useAuthStore(state => state.isAdmin);
   
   useEffect(() => {
     setLocalQuantity(1);
+    setIsEditingQty(false);
     window.scrollTo(0, 0);
   }, [selectedProductId]);
 
@@ -43,6 +48,26 @@ export function ProductPage() {
     }
   };
 
+  const handleQtyInputBlur = () => {
+    setIsEditingQty(false);
+    const parsed = parseInt(tempQty, 10);
+    if (!isNaN(parsed) && parsed > 0) {
+      if (cartItem) {
+        updateQuantity(product.id, parsed);
+      } else {
+        setLocalQuantity(parsed);
+      }
+    } else if (parsed === 0 && cartItem) {
+      removeItem(product.id);
+    }
+  };
+
+  const handleQtyInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.currentTarget.blur();
+    }
+  };
+
   const handleAddToCart = () => {
     if (!cartItem) {
       addItem(product, localQuantity);
@@ -66,36 +91,29 @@ export function ProductPage() {
       </div>
 
       <div className="flex flex-col md:flex-row gap-8 p-4 md:p-10 border-b border-gray-100">
-        <div className="w-full md:w-1/2 aspect-[4/5] sm:aspect-auto sm:h-[600px] bg-white border border-gray-100 rounded-2xl overflow-hidden relative p-4 flex flex-col items-center justify-center">
-          <motion.img 
-            layoutId={`image-${product.id}`}
-            src={product.image} 
-            alt={product.name}
-            className="w-full h-full object-contain mix-blend-multiply"
-          />
-        </div>
-
-        <div className="w-full md:w-1/2 flex flex-col justify-start pt-4 md:py-8">
+        <div className="w-full flex flex-col justify-start pt-4 md:py-8">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{product.name}</h1>
           
           <div className="mt-4">
-            {hasDiscount ? (
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-500">{getTranslation(language, 'mrp')}</span>
-                  <span className="text-lg text-gray-400 line-through">₹{formatNumberIntl(product.mrp || 0, language)}</span>
+            {isAdmin && (
+              hasDiscount ? (
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500">{getTranslation(language, 'mrp')}</span>
+                    <span className="text-lg text-gray-400 line-through">₹{formatNumberIntl(product.mrp || 0, language)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-900 font-medium">{getTranslation(language, 'ourPrice')}</span>
+                    <span className="text-3xl font-bold text-brand-blue">₹{formatNumberIntl(product.price || 0, language)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-900 font-medium">{getTranslation(language, 'youSave')}</span>
+                    <span className="text-lg font-bold text-green-600">{formatNumberIntl(savingsPercent, language)}% (₹{formatNumberIntl((product.mrp || 0) - (product.price || 0), language)})</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-900 font-medium">{getTranslation(language, 'ourPrice')}</span>
-                  <span className="text-3xl font-bold text-brand-blue">₹{formatNumberIntl(product.price || 0, language)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-900 font-medium">{getTranslation(language, 'youSave')}</span>
-                  <span className="text-lg font-bold text-green-600">{formatNumberIntl(savingsPercent, language)}% (₹{formatNumberIntl((product.mrp || 0) - (product.price || 0), language)})</span>
-                </div>
-              </div>
-            ) : (
-              product.price && <p className="text-3xl font-bold text-brand-blue">₹{formatNumberIntl(product.price, language)}</p>
+              ) : (
+                product.price && <p className="text-3xl font-bold text-brand-blue">₹{formatNumberIntl(product.price, language)}</p>
+              )
             )}
           </div>
           
@@ -107,7 +125,30 @@ export function ProductPage() {
               >
                 -
               </button>
-              <span className="font-medium text-gray-900">{formatNumberIntl(displayQuantity, language)}</span>
+              
+              {isEditingQty ? (
+                <input 
+                  type="number"
+                  min="0"
+                  autoFocus
+                  value={tempQty}
+                  onChange={(e) => setTempQty(e.target.value)}
+                  onBlur={handleQtyInputBlur}
+                  onKeyDown={handleQtyInputKeyDown}
+                  className="w-full text-center font-medium text-gray-900 bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+              ) : (
+                <span 
+                  onClick={() => {
+                    setTempQty(displayQuantity.toString());
+                    setIsEditingQty(true);
+                  }}
+                  className="cursor-pointer font-medium px-2 text-center text-gray-900"
+                >
+                  {formatNumberIntl(displayQuantity, language)}
+                </span>
+              )}
+
               <button 
                 onClick={() => handleQuantityChange(1)}
                 className="w-10 h-full flex items-center justify-center text-gray-500 hover:text-gray-900 transition-colors text-lg"
@@ -143,7 +184,7 @@ export function ProductPage() {
 
       <div className="px-4 md:px-10 py-10">
         <h2 className="text-xl font-bold text-gray-900 mb-6">Explore More Products</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+        <div className="flex flex-col gap-3">
           {otherProducts.map((p) => (
              <ProductCard key={p.id} product={p} />
           ))}
