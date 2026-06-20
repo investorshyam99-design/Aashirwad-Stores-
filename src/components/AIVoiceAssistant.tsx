@@ -95,7 +95,10 @@ export function AIVoiceAssistant() {
       recognition.onerror = (event) => {
         console.error('Speech recognition error', event.error);
         setIsListening(false);
-        if (event.error === 'no-speech' && isOpenRef.current && !isProcessingRef.current) {
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+          setMessages(prev => [...prev, { role: 'assistant', text: "Microphone permission denied. Kripya browser settings mein microphone allow karein." }]);
+          speak("Microphone permission denied.");
+        } else if (event.error === 'no-speech' && isOpenRef.current && !isProcessingRef.current) {
           startRecognition();
         }
       };
@@ -215,7 +218,7 @@ export function AIVoiceAssistant() {
 
     try {
       const simplifiedProducts = products.map(p => ({ id: p.id, name: p.name, price: p.price, unit: p.unit }));
-      const response = await fetch('/api/gemini/parse-order', {
+      const response = await fetch('/api/voice-assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, products: simplifiedProducts, history: messagesRef.current, cart: itemsRef.current }),

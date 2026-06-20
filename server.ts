@@ -2,6 +2,9 @@ import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 async function startServer() {
   const app = express();
@@ -10,18 +13,23 @@ async function startServer() {
   app.use(express.json());
 
   // API constraints
-  const ai = new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY,
-    httpOptions: {
-      headers: {
-        'User-Agent': 'aistudio-build',
-      }
-    }
-  });
-
+  const apiKey = process.env.GEMINI_API_KEY;
+  
   // AI Conversational Smart Ordering Endpoint
-  app.post('/api/gemini/parse-order', async (req, res) => {
+  app.post('/api/voice-assistant', async (req, res) => {
     try {
+      if (!apiKey) {
+        throw new Error("GEMINI_API_KEY environment variable is missing. Please configure it in your hosting environment.");
+      }
+      
+      const ai = new GoogleGenAI({
+        apiKey: apiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          }
+        }
+      });
       const { text, products, history = [], cart = [] } = req.body;
       
       const prompt = `
@@ -85,8 +93,14 @@ async function startServer() {
       console.error(error);
       const strError = String(error);
       const strMessage = error.message || strError;
+      
+      // Fallback for RATE limits (Code 429) so users get a simple free fallback response
       if (strMessage.includes('429') || strMessage.includes('Quota') || strMessage.includes('Exceeded') || strMessage.includes('RESOURCE_EXHAUSTED')) {
-         return res.status(429).json({ error: "AI assistant limit reached. Please try again in a minute." });
+         return res.json({
+           reply: "Main abhi thoda busy hoon (too many requests limit reached), kripya ek minute baad dobara koshish karein.",
+           action: "ask",
+           cartUpdates: []
+         });
       }
       res.status(500).json({ error: strMessage });
     }
