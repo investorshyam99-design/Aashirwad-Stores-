@@ -153,7 +153,7 @@ export function AIVoiceAssistant() {
     }
   };
 
-  const placeOrderWithoutSpeak = async () => {
+  const placeOrderWithoutSpeak = async (customerName?: string) => {
     try {
       const { addDoc, collection } = await import('firebase/firestore');
       const { db } = await import('../lib/firebase');
@@ -168,7 +168,7 @@ export function AIVoiceAssistant() {
 
       await addDoc(collection(db, 'orders'), {
         orderId,
-        customerName: 'Voice Assistant Guest',
+        customerName: customerName || 'Voice Assistant Guest',
         customerPhone: 'N/A',
         customerAddress: 'Voice Order',
         voiceNotes: userRequests || '',
@@ -256,7 +256,7 @@ export function AIVoiceAssistant() {
 
       if (data.action === 'place_order') {
          voiceReply = "Aapka order successfully place ho gaya hai. Dhanyawad!";
-         await placeOrderWithoutSpeak();
+         await placeOrderWithoutSpeak(data.customerName);
       }
 
       const updatedHistory = [...messagesRef.current, { role: 'assistant' as const, text: voiceReply }];

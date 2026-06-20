@@ -194,12 +194,9 @@ export function Cart() {
               <div className="bg-white mt-2 shadow-sm">
                 {items.map((item, index) => (
                   <div key={item.id} className={cn("p-4 flex gap-4", index !== items.length - 1 && "border-b border-gray-100")}>
-                    <div className="w-20 h-24 bg-white border border-gray-100 rounded-md overflow-hidden shrink-0 flex items-center justify-center p-1">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply" />
-                    </div>
                     <div className="flex flex-col flex-1">
                       <div className="flex justify-between items-start">
-                        <span className="text-sm text-black font-medium line-clamp-2 pr-2">{item.name}</span>
+                        <span className="text-sm text-black font-medium pr-2">{item.name}</span>
                         {isAdmin && item.price !== undefined && (
                           <div className="flex flex-col items-end shrink-0 pl-2">
                             {editingPriceId === item.id ? (
@@ -338,7 +335,13 @@ export function Cart() {
                         autoFocus
                       />
                       <button 
-                        onClick={() => setPrintCustomerName(adminInputValue || 'Guest')}
+                        onClick={() => {
+                          if (!adminInputValue.trim()) {
+                            alert('Please enter a customer name before printing');
+                            return;
+                          }
+                          setPrintCustomerName(adminInputValue);
+                        }}
                         className="bg-gray-800 text-white px-5 rounded-sm font-semibold flex items-center gap-2 hover:bg-black transition"
                       >
                         <Printer size={18} /> Print
@@ -384,10 +387,15 @@ export function Cart() {
                             <h2 className="text-xl font-bold">Checkout</h2>
                             <button onClick={() => setCheckoutAction('none')}><X size={24}/></button>
                          </div>
-                         <form className="flexflex-col flex-1" onSubmit={async (e) => {
+                         <form className="flex flex-col flex-1" onSubmit={async (e) => {
                              e.preventDefault();
                              const formData = new FormData(e.currentTarget);
-                             const customerName = formData.get('name') as string;
+                             const customerName = (formData.get('name') as string).trim();
+                             
+                             if (!customerName) {
+                               alert('Please enter a name');
+                               return;
+                             }
                              const customerPhone = formData.get('phone') as string;
                              const customerAddress = (formData.get('address') as string) || '';
                              const paymentMethod = formData.get('payment') as string || 'cod';
