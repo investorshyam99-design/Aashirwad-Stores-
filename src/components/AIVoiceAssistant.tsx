@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, X, Sparkles, Loader2, StopCircle } from 'lucide-react';
+import { Mic, X, Sparkles, Loader2, StopCircle, Send } from 'lucide-react';
 import { useCartStore } from '../store/cart';
 import { useProductsStore } from '../store/products';
 
@@ -359,54 +359,42 @@ export function AIVoiceAssistant() {
               )}
             </div>
 
-            <div className="mt-2 flex flex-col items-center border-t border-gray-100 pt-6">
-              <div 
-                onClick={toggleListening}
-                className={`w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 ${
-                  isListening 
-                    ? 'bg-brand-blue text-white scale-110 shadow-[0_0_40px_rgba(37,99,235,0.4)]' 
-                    : 'bg-blue-50 text-brand-blue hover:bg-blue-100'
-                }`}
-              >
-                {isProcessing ? (
-                  <Loader2 size={36} className="animate-spin" />
-                ) : isListening ? (
-                  <div className="flex gap-1 items-center justify-center h-full">
-                    <div className="w-1.5 h-6 bg-white rounded-full animate-pulse"></div>
-                    <div className="w-1.5 h-10 bg-white rounded-full animate-pulse delay-75"></div>
-                    <div className="w-1.5 h-4 bg-white rounded-full animate-pulse delay-150"></div>
-                  </div>
-                ) : (
-                  <Mic size={36} />
-                )}
+            <div className="mt-2 flex items-center gap-2 border-t border-gray-100 pt-4 pb-2">
+              <div className="flex-1 flex items-center gap-2 bg-gray-50 rounded-full p-1 pl-4 border border-gray-200 focus-within:border-brand-blue focus-within:bg-white transition-colors">
+                <input
+                  type="text"
+                  value={transcript}
+                  onChange={(e) => setTranscript(e.target.value)}
+                  placeholder="Type your order or ask a question..."
+                  className="flex-1 bg-transparent py-3 outline-none text-sm text-gray-800"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && transcript.trim()) {
+                      processTranscript(transcript);
+                    }
+                  }}
+                  disabled={isProcessing || isListening}
+                />
+                
+                <button 
+                  onClick={toggleListening}
+                  className={`p-3 rounded-full transition-colors flex items-center justify-center shrink-0 ${
+                    isListening 
+                      ? 'bg-red-500 text-white animate-pulse' 
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  title={isListening ? "Stop listening" : "Start speaking"}
+                >
+                  {isListening ? <StopCircle size={18} /> : <Mic size={18} />}
+                </button>
               </div>
-              <p className="text-sm font-medium text-gray-500 mt-4 mb-4">
-                {isProcessing ? 'Thinking...' : isListening ? 'Listening...' : 'Tap to speak'}
-              </p>
 
-              {!isListening && !isProcessing && (
-                <div className="w-full flex items-center gap-2 bg-gray-50 rounded-full p-1 border border-gray-200 focus-within:border-brand-blue focus-within:bg-white transition-colors">
-                  <input
-                    type="text"
-                    value={transcript}
-                    onChange={(e) => setTranscript(e.target.value)}
-                    placeholder="Type your message..."
-                    className="flex-1 bg-transparent px-4 py-3 outline-none text-sm"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && transcript.trim()) {
-                        processTranscript(transcript);
-                      }
-                    }}
-                  />
-                  <button 
-                    onClick={() => processTranscript(transcript)}
-                    disabled={!transcript.trim()}
-                    className="p-3 bg-brand-blue text-white rounded-full disabled:opacity-50 transition-opacity"
-                  >
-                    <Sparkles size={18} />
-                  </button>
-                </div>
-              )}
+              <button 
+                onClick={() => processTranscript(transcript)}
+                disabled={!transcript.trim() || isProcessing || isListening}
+                className="w-12 h-12 flex items-center justify-center bg-brand-blue text-white rounded-full disabled:opacity-50 transition-opacity shrink-0 hover:bg-brand-blue-hover"
+              >
+                {isProcessing ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+              </button>
             </div>
           </div>
         </div>

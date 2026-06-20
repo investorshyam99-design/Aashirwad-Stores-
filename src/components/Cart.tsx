@@ -3,7 +3,7 @@ import { useCartStore } from '../store/cart';
 import { useI18nStore } from '../store/i18n';
 import { useAuthStore } from '../store/auth';
 import { getTranslation, formatNumberIntl } from '../i18n/translations';
-import { X, ShoppingBag, Printer, MessageSquare, Send } from 'lucide-react';
+import { X, ShoppingBag, Printer, MessageSquare, Send, ArrowLeft } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { cn } from '../lib/utils';
 
@@ -28,6 +28,7 @@ export function Cart() {
     if (checkoutAction === 'print' && printCustomerName) {
       const style = document.createElement('style');
       style.innerHTML = `
+        @page { margin: 0; }
         @media print {
           body * { visibility: hidden; }
           #print-bill, #print-bill * { visibility: visible; }
@@ -36,9 +37,10 @@ export function Cart() {
             position: absolute; 
             left: 0; 
             top: 0; 
-            width: 100%; 
-            border: none; 
-            padding: 20px; 
+            width: 58mm; 
+            padding: 5px; 
+            font-family: monospace;
+            font-size: 12px;
             box-shadow: none; 
           }
         }
@@ -133,51 +135,113 @@ export function Cart() {
         >
           {/* Print Template */}
           <div id="print-bill" className="hidden">
-            <div className="flex justify-between items-end border-b pb-4 mb-4">
-              <div>
-                <h1 className="text-2xl font-bold">Aashirvaad Stores</h1>
-                <p className="text-gray-600 mt-1">Customer: <span className="font-semibold text-black">{printCustomerName}</span></p>
-              </div>
-              <p className="text-gray-500 text-sm">{new Date().toLocaleDateString()}</p>
+            <div className="border-b pb-2 mb-2">
+              <p className="font-semibold text-black">Customer: {printCustomerName}</p>
+              <p className="text-gray-500 text-xs">{new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</p>
             </div>
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b">
-                  <th className="py-2">Item</th>
-                  <th className="py-2 text-center">Qty</th>
-                  <th className="py-2 text-right">Price</th>
-                  <th className="py-2 text-right">Total</th>
+                <tr className="border-b border-dashed border-gray-400">
+                  <th className="py-1">Item</th>
+                  <th className="py-1 text-center">Qty</th>
+                  <th className="py-1 text-right">Tot</th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((item, idx) => (
-                  <tr key={idx} className="border-b">
-                    <td className="py-3 text-sm">{item.name}</td>
-                    <td className="py-3 text-center">{item.quantity}</td>
-                    <td className="py-3 text-right">₹{item.price?.toFixed(2) || '0.00'}</td>
-                    <td className="py-3 text-right">₹{((item.price || 0) * item.quantity).toFixed(2)}</td>
+                  <tr key={idx} className="border-b border-dashed border-gray-400">
+                    <td className="py-1 pr-1" style={{maxWidth: '25mm', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{item.name}</td>
+                    <td className="py-1 text-center">{item.quantity}</td>
+                    <td className="py-1 text-right">₹{((item.price || 0) * item.quantity).toFixed(0)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <div className="flex justify-end mt-6">
-              <div className="text-xl font-bold">Grand Total: ₹{totalPrice}</div>
+            <div className="flex justify-between items-center mt-2 pt-1 border-t border-dashed border-gray-400">
+              <span className="font-bold">Total:</span>
+              <span className="font-bold">₹{parseFloat(totalPrice).toFixed(0)}</span>
             </div>
           </div>
 
           {/* Header */}
           <div className="h-14 bg-white flex items-center px-4 border-b border-gray-100 shrink-0 shadow-sm print:hidden">
             <button 
-              onClick={() => setCartOpen(false)}
+              onClick={() => {
+                if (checkoutAction === 'checkout') setCheckoutAction('none');
+                else setCartOpen(false);
+              }}
               className="p-2 -ml-2 text-gray-600 hover:text-black hover:bg-gray-50 rounded-full transition-colors"
             >
-              <X size={24} />
+              {checkoutAction === 'checkout' ? <ArrowLeft size={24} /> : <X size={24} />}
             </button>
-            <div className="ml-3 font-medium text-black">{getTranslation(language, 'cart')}</div>
+            <div className="ml-3 font-medium text-black">
+              {checkoutAction === 'checkout' ? 'Checkout' : getTranslation(language, 'cart')}
+            </div>
           </div>
 
-          {/* Cart Items List */}
-          <div className="flex-1 overflow-y-auto pb-40 print:hidden">
+          {checkoutAction === 'checkout' ? (
+             <form className="flex flex-col flex-1 h-full overflow-hidden bg-white animate-in fade-in" onSubmit={async (e) => {
+                 e.preventDefault();
+                 const formData = new FormData(e.currentTarget);
+                 const customerName = (formData.get('name') as string).trim();
+                 
+                 if (!customerName) {
+                   alert('Please enter a name');
+                   return;
+                 }
+                 const customerPhone = formData.get('phone') as string;
+                 
+                 try {
+                   const { addDoc, collection } = await import('firebase/firestore');
+                   const { db } = await import('../lib/firebase');
+                   const orderId = `AASH-${Math.floor(100000 + Math.random() * 900000)}`;
+
+                   await addDoc(collection(db, 'orders'), {
+                     orderId,
+                     customerName,
+                     customerPhone,
+                     items: items.map(i => ({ id: i.id, name: i.name, quantity: i.quantity, price: i.price, image: i.image })),
+                     totalAmount: parseFloat(totalPrice),
+                     status: 'new',
+                     createdAt: Date.now(),
+                     updatedAt: Date.now()
+                   });
+                   
+                   // Mock sending email to Gmail
+                   fetch('/api/health').catch(() => {});
+                   
+                   alert(`Order placed successfully! Your Order ID is ${orderId}`);
+                   useCartStore.getState().clearCart();
+                   setCheckoutAction('none');
+                   setCartOpen(false);
+                   import('../store/ui').then(({ useUIStore }) => {
+                     useUIStore.getState().setActiveTab('orders');
+                   });
+                 } catch(err) {
+                   console.error(err);
+                   alert('Error placing order.');
+                 }
+               }}>
+               <div className="space-y-4 flex-1 p-4 pb-24 overflow-y-auto custom-scrollbar">
+                 <div>
+                   <label className="text-sm font-medium text-gray-700">Name</label>
+                   <input name="name" required className="w-full mt-1 border border-gray-200 rounded p-3 outline-none focus:border-brand-blue text-sm" placeholder="Full Name" />
+                 </div>
+                 <div>
+                   <label className="text-sm font-medium text-gray-700">Phone Number (Optional)</label>
+                   <input name="phone" type="tel" className="w-full mt-1 border border-gray-200 rounded p-3 outline-none focus:border-brand-blue text-sm" placeholder="Mobile Number" />
+                 </div>
+               </div>
+               <div className="p-4 bg-white border-t border-gray-100 shrink-0">
+                 <button type="submit" className="w-full py-4 text-white rounded-lg font-bold bg-brand-blue hover:bg-brand-blue-hover text-lg shadow-sm animate-pulse-slow">
+                   Place Order
+                 </button>
+               </div>
+             </form>
+          ) : (
+            <>
+              {/* Cart Items List */}
+              <div className="flex-1 overflow-y-auto pb-40 print:hidden">
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-gray-400 bg-white mt-2">
                 <ShoppingBag size={64} className="mb-4 opacity-20" />
@@ -380,82 +444,12 @@ export function Cart() {
                       <ShoppingBag className="w-5 h-5 shrink-0" />
                       <span className="truncate">Proceed to Checkout</span>
                     </button>
-                    
-                    {checkoutAction === 'checkout' && (
-                       <div className="fixed inset-0 z-[110] bg-white flex flex-col p-4 animate-in fade-in slide-in-from-bottom">
-                         <div className="flex items-center justify-between border-b pb-3 mb-4">
-                            <h2 className="text-xl font-bold">Checkout</h2>
-                            <button onClick={() => setCheckoutAction('none')}><X size={24}/></button>
-                         </div>
-                         <form className="flex flex-col flex-1" onSubmit={async (e) => {
-                             e.preventDefault();
-                             const formData = new FormData(e.currentTarget);
-                             const customerName = (formData.get('name') as string).trim();
-                             
-                             if (!customerName) {
-                               alert('Please enter a name');
-                               return;
-                             }
-                             const customerPhone = formData.get('phone') as string;
-                             const customerAddress = (formData.get('address') as string) || '';
-                             const paymentMethod = formData.get('payment') as string || 'cod';
-                             
-                             try {
-                               const { addDoc, collection } = await import('firebase/firestore');
-                               const { db } = await import('../lib/firebase');
-                               const orderId = `AASH-${Math.floor(100000 + Math.random() * 900000)}`;
-
-                               await addDoc(collection(db, 'orders'), {
-                                 orderId,
-                                 customerName,
-                                 customerPhone,
-                                 customerAddress,
-                                 items: items.map(i => ({ id: i.id, name: i.name, quantity: i.quantity, price: i.price, image: i.image })),
-                                 totalAmount: parseFloat(totalPrice),
-                                 status: 'new',
-                                 paymentMethod,
-                                 paymentStatus: paymentMethod === 'cod' ? 'pending' : 'paid',
-                                 createdAt: Date.now(),
-                                 updatedAt: Date.now()
-                               });
-                               
-                               // Mock sending email to Gmail
-                               fetch('/api/health').catch(() => {});
-                               
-                               alert(`Order placed successfully! Your Order ID is ${orderId}`);
-                               useCartStore.getState().clearCart();
-                               setCheckoutAction('none');
-                               setCartOpen(false);
-                               import('../store/ui').then(({ useUIStore }) => {
-                                 useUIStore.getState().setActiveTab('orders');
-                               });
-                             } catch(err) {
-                               console.error(err);
-                               alert('Error placing order.');
-                             }
-                           }}>
-                             <div className="space-y-4 flex-1 pt-4">
-                             <div>
-                               <label className="text-sm font-medium text-gray-700">Name</label>
-                               <input name="name" required className="w-full mt-1 border border-gray-200 rounded p-3 outline-none focus:border-brand-blue" placeholder="Full Name" />
-                             </div>
-                             <div>
-                               <label className="text-sm font-medium text-gray-700">Phone Number</label>
-                               <input name="phone" required type="tel" className="w-full mt-1 border border-gray-200 rounded p-3 outline-none focus:border-brand-blue" placeholder="Mobile Number" />
-                             </div>
-                           </div>
-                           <div className="mt-8 pb-4">
-                             <button type="submit" className="w-full py-4 text-white rounded-lg font-bold bg-brand-blue hover:bg-brand-blue-hover text-lg shadow-sm animate-pulse-slow">
-                               Place Order • ₹{totalPrice}
-                             </button>
-                           </div>
-                         </form>
-                       </div>
-                    )}
                   </div>
                 )}
               </div>
             </div>
+          )}
+            </>
           )}
         </motion.div>
       )}
