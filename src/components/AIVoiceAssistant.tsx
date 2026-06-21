@@ -114,8 +114,13 @@ export function AIVoiceAssistant() {
         transcriptRef.current = '';
         recognitionRef.current.start();
         setIsListening(true);
-      } catch (e) {
-        console.error("Start recognition error:", e);
+      } catch (e: any) {
+        if (e && e.name === 'InvalidStateError') {
+          // Already started, benign
+          setIsListening(true);
+        } else {
+          console.error("Start recognition error:", e);
+        }
       }
     }
   };
@@ -282,7 +287,7 @@ export function AIVoiceAssistant() {
       
     } catch (error: any) {
        console.error("Smart ordering error", error);
-       let errReply = "Sorry, network issue hai.";
+       let errReply = `Network issue: ${error.message || 'unknown'}`;
        if (error.message?.includes('AI assistant limit reached')) {
          errReply = "AI assistant quota exceeded. API calls limited for now.";
        }
