@@ -125,8 +125,35 @@ export function AIVoiceAssistant() {
     }
   };
 
-  const speak = (text: string) => {
-    return new Promise((resolve) => {
+  const speak = (text: string, audioBase64?: string) => {
+    return new Promise(async (resolve) => {
+      if (audioBase64) {
+         try {
+           const outputAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+           const binaryString = atob(audioBase64);
+           const len = binaryString.length;
+           const bytes = new Uint8Array(len);
+           for (let i = 0; i < len; i++) {
+             bytes[i] = binaryString.charCodeAt(i);
+           }
+           const buffer = new Int16Array(bytes.buffer);
+           const audioBuffer = outputAudioCtx.createBuffer(1, buffer.length, 24000);
+           const channelData = audioBuffer.getChannelData(0);
+           for (let i = 0; i < buffer.length; i++) {
+             channelData[i] = buffer[i] / 32768.0;
+           }
+           const source = outputAudioCtx.createBufferSource();
+           source.buffer = audioBuffer;
+           source.connect(outputAudioCtx.destination);
+           source.onended = () => resolve(true);
+           source.start(0);
+           return;
+         } catch(e) {
+           console.error("PCM playback error", e);
+         }
+      }
+
+      // Fallback
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
@@ -272,7 +299,7 @@ export function AIVoiceAssistant() {
       messagesRef.current = updatedHistory;
       
       if (voiceReply) {
-        await speak(voiceReply);
+        await speak(voiceReply, data.audioBase64);
       }
 
       if (data.action === 'place_order') {

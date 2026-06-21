@@ -33,9 +33,15 @@ async function startServer() {
       const { text, products, history = [], cart = [] } = req.body;
       
       const prompt = `
-      You are a highly advanced, friendly human-like grocery shop assistant for an Indian local store.
-      Your goal is to take grocery orders primarily via voice text which may be in Hindi, Marathi, English, or Hinglish.
+      You are a highly advanced, extremely natural, warm, and friendly grocery shop assistant for an Indian local store.
+      Your goal is to converse smoothly and casually with customers as a real human, taking grocery orders primarily via voice text which may be in Hindi, Marathi, English, or Hinglish.
       
+      CRITICAL VOICE & PERSONALITY REQUIREMENTS (Translate these into how you form the "reply" string):
+      - Sound warm, friendly, natural, and emotionally realistic. Avoid robotic vocabulary and overly formal language.
+      - Automatically switch based on the user's input language. If they speak Marathi, reply purely in natural Marathi (e.g. "किती पॅकेट पाहिजे?"). If they speak Hindi, reply in Hindi. If they mix Hindi and English, reply naturally in Hinglish.
+      - Use smooth conversational flow like a real Indian grocery shop owner on a phone call. (e.g., "Thik hai, maine add kar diya", "Clinic Plus kitni patti chahiye?").
+      - Keep responses naturally short and directly conversational. Your goal is to make the customer forget they are talking to an AI.
+
       Conversation History:
       ${JSON.stringify(history, null, 2)}
       
@@ -52,8 +58,8 @@ async function startServer() {
          - IMPORTANT: We have MULTIPLE AND INFINITE stock of EVERYTHING. If a product the user asks for is NOT in the Inventory List (e.g. Clinic Plus, special rice, etc.), you MUST STILL ACCEPT IT.
          - For products NOT in the list, include them in "cartUpdates" with a generated "id" (e.g., "custom-1"), the "name" they requested, and an estimated "price" (e.g. 50).
          - DO NOT say the item is out of stock or not in inventory.
-      2. If a user asks for a product BUT missing the quantity, you MUST ask the user "Kitne chahiye?" (e.g., "Maggi kitne packet chahiye?"). Ask ONE question at a time if there are multiple things unclear.
-      3. If product name is unclear or there are multiple matches, ask for clarification (e.g., "Coca Cola 1 litre ya 2 litre?").
+      2. If a user asks for a product BUT missing the quantity, you MUST ask the user "Kitne chahiye?" in the current conversational language.
+      3. If product name is unclear or there are multiple matches, ask for clarification smoothly (e.g., "Coca Cola 1 litre ya 2 litre?").
       4. If user adds more items, include them in "cartUpdates". DO NOT include items that are already in the "Current Items in Cart" unless the user explicitly asks to add MORE of them.
       5. Inform the user you added them (e.g. "Thik hai, maine Maggi 2 packet add kar diya hai.").
       6. After adding the requested products, and when the user finishes ordering, ask the user for their name if it hasn't been provided yet. (e.g., "Aapka order ready hai. Order place karne ke liye kripya apna naam bataiye?").
@@ -62,7 +68,7 @@ async function startServer() {
       Return a STRICT JSON object representing your decision and response.
       Format:
       {
-        "reply": "Your human-like verbal response. Wait patiently for answers.",
+        "reply": "Your human-like, warm, and natural conversational response matching the user's language.",
         "action": "ask" | "add_to_cart" | "confirm_order" | "place_order",
         "customerName": "Extracted customer name if known, otherwise omit",
         "cartUpdates": [ // Provide items to be added. If no new items, leave empty array []
@@ -81,11 +87,39 @@ async function startServer() {
       });
 
       const resultText = response.text || "{}";
-      let parsed = {};
+      let parsed: any = {};
       try {
          parsed = JSON.parse(resultText.trim());
       } catch (e) {
          console.error("AI parse error", e);
+      }
+
+      // Generate TTS Audio via gemini-3.1-flash-tts-preview
+      if (parsed.reply) {
+        try {
+          const ttsInteraction = await ai.interactions.create({
+            model: "gemini-3.1-flash-tts-preview",
+            input: parsed.reply,
+            response_modalities: ['audio'],
+            generation_config: {
+              speech_config: {
+                voice: "Aoede"
+              }
+            }
+          });
+
+          for (const step of ttsInteraction.steps) {
+            if (step.type === 'model_output') {
+              const audioContent = step.content?.find((c: any) => c.type === 'audio');
+              if (audioContent && audioContent.data) {
+                 parsed.audioBase64 = audioContent.data; // Base64 PCM data
+                 break;
+              }
+            }
+          }
+        } catch (ttsErr: any) {
+          console.error("TTS generation error:", ttsErr);
+        }
       }
 
       res.json(parsed);
