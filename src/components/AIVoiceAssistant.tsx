@@ -150,21 +150,8 @@ export function AIVoiceAssistant() {
            return;
          } catch(e) {
            console.error("PCM playback error", e);
+           resolve(false);
          }
-      }
-
-      // Fallback
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        const voices = window.speechSynthesis.getVoices();
-        const indianVoice = voices.find(v => v.lang.includes('hi') || v.lang.includes('IN')) || voices[0];
-        if (indianVoice) utterance.voice = indianVoice;
-        utterance.rate = 1.0;
-        utterance.pitch = 1.1; // slightly more friendly
-        utterance.onend = () => resolve(true);
-        utterance.onerror = () => resolve(false);
-        window.speechSynthesis.speak(utterance);
       } else {
         resolve(false);
       }
@@ -228,7 +215,7 @@ export function AIVoiceAssistant() {
     
     // Manual stop commands
     const lowerText = text.toLowerCase();
-    if (lowerText.includes('stop') || lowerText.includes('order complete') || lowerText.includes('bas')) {
+    if (lowerText.includes('stop') || lowerText.includes('order complete') || lowerText.includes('bas') || lowerText.includes('band karo') || lowerText.includes('ho gaya')) {
        setIsOpen(false);
        return;
     }
@@ -256,16 +243,22 @@ export function AIVoiceAssistant() {
         body: JSON.stringify({ text, products: simplifiedProducts, history: messagesRef.current, cart: itemsRef.current }),
       });
       
+      const contentType = response.headers.get("content-type");
       let data;
+
       if (!response.ok) {
-        try {
-          const errData = await response.json();
-          throw new Error(errData.error || `HTTP error! status: ${response.status}`);
-        } catch(e: any) {
-          throw new Error(e.message || `HTTP error! status: ${response.status}`);
+        if (contentType && contentType.includes("application/json")) {
+           const errData = await response.json();
+           throw new Error(errData.error || `HTTP error! status: ${response.status}`);
+        } else {
+           throw new Error(`Server API is missing (Status ${response.status}). If you deployed this, ensure the Node.js backend is running and not just the static frontend!`);
         }
-      } else {
+      }
+
+      if (contentType && contentType.includes("application/json")) {
         data = await response.json();
+      } else {
+        throw new Error("Server returned an HTML page instead of JSON. This usually means the Node.js server is not running on your hosting provider (like Vercel).");
       }
       
       let voiceReply = data.reply;
@@ -338,9 +331,7 @@ export function AIVoiceAssistant() {
         onClick={() => {
           setIsOpen(true);
           if (messages.length === 0) {
-            const welcomeText = "Aapko kya chahiye?";
-            setMessages([{ role: 'assistant', text: welcomeText }]);
-            speak(welcomeText);
+            processTranscript("Namaste");
           }
         }}
         className="fixed bottom-24 md:bottom-10 right-4 md:right-10 z-[60] bg-brand-blue text-white p-4 rounded-full shadow-lg hover:bg-brand-blue-hover transition-transform hover:scale-105 flex items-center justify-center animate-bounce-slow"

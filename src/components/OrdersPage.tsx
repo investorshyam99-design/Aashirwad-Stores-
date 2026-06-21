@@ -16,6 +16,37 @@ function OrderItemCard({ order, isAdmin, language, updateStatus }: { order: any,
   const [newPrice, setNewPrice] = useState('');
   const [newQty, setNewQty] = useState('1');
 
+  const [showSmsInput, setShowSmsInput] = useState(false);
+  const [smsInput, setSmsInput] = useState('');
+
+  const handleSendSms = (withPrice: boolean) => {
+    if(!smsInput.trim()) return;
+    
+    const orderIdStr = (order.orderId || order.id).slice(0,8).toUpperCase();
+    let message = `Aashirwad Stores - Bill #${orderIdStr}\n\n`;
+    
+    order.items.forEach((item: any) => {
+      if (withPrice && item.price) {
+        message += `${item.quantity}x ${item.name} - ₹${item.price * item.quantity}\n`;
+      } else {
+        message += `${item.quantity}x ${item.name}\n`;
+      }
+    });
+    
+    if (withPrice) {
+      message += `\nTotal: ₹${order.totalAmount}`;
+    }
+    
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const separator = isIOS ? '&' : '?';
+    
+    const uri = `sms:${encodeURIComponent(smsInput)}${separator}body=${encodeURIComponent(message)}`;
+    window.location.href = uri;
+
+    setShowSmsInput(false);
+    setSmsInput('');
+  };
+
   const handleRemoveItem = async (itemIndex: number) => {
     const newItems = [...order.items];
     newItems.splice(itemIndex, 1);
@@ -256,6 +287,30 @@ function OrderItemCard({ order, isAdmin, language, updateStatus }: { order: any,
             >
               <Printer size={14} /> Print without Price
             </button>
+            
+            <div className="mt-2 text-center w-full">
+               {showSmsInput ? (
+                 <div className="flex flex-col gap-2 p-3 bg-brand-blue/5 rounded-lg border border-brand-blue/20">
+                   <input
+                     type="text"
+                     placeholder="Enter Name or Number"
+                     value={smsInput}
+                     onChange={e => setSmsInput(e.target.value)}
+                     className="w-full text-sm border rounded px-2 py-1.5 focus:outline-none focus:border-brand-blue"
+                     autoFocus
+                   />
+                   <div className="flex gap-2">
+                     <button onClick={() => setShowSmsInput(false)} className="text-xs flex-1 py-1.5 bg-gray-200 text-gray-700 rounded font-semibold hover:bg-gray-300">Cancel</button>
+                     <button onClick={() => handleSendSms(true)} className="text-xs flex-1 py-1.5 bg-brand-blue text-white rounded font-semibold hover:bg-brand-blue-hover">With Price</button>
+                     <button onClick={() => handleSendSms(false)} className="text-xs flex-1 py-1.5 bg-brand-orange text-white rounded font-semibold hover:bg-brand-orange-hover">Without Price</button>
+                   </div>
+                 </div>
+               ) : (
+                 <button onClick={() => setShowSmsInput(true)} className="text-sm font-medium text-brand-blue hover:text-brand-blue-hover transition underline decoration-dashed">
+                   Send bill via SMS
+                 </button>
+               )}
+            </div>
           </div>
         )}
       </div>

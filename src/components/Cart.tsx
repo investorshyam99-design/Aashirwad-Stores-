@@ -78,15 +78,27 @@ export function Cart() {
     setShowContacts(false);
   };
 
-  const handleSmsSend = () => {
+  const handleSmsSend = (withPrice: boolean) => {
     if (!adminInputValue) return;
     const itemList = items.map((item, index) => {
-      const priceText = item.price ? `Rs.${item.price.toFixed(2)} ` : '';
-      return `${index + 1}. ${item.name}\n${priceText}x ${item.quantity}`;
+      if (withPrice && item.price) {
+        return `${index + 1}. ${item.name}\n₹${item.price.toFixed(2)} x ${item.quantity}`;
+      } else {
+        return `${index + 1}. ${item.name}\n${item.quantity} qty`;
+      }
     }).join('\n');
     
-    const message = `Bill:\n${itemList}\nTotal: Rs.${totalPrice}`;
-    window.open(`sms:${adminInputValue}?body=${encodeURIComponent(message)}`, '_self');
+    let message = `Aashirwad Stores - Bill:\n\n${itemList}`;
+    if (withPrice) {
+      message += `\n\nTotal: ₹${totalPrice}`;
+    }
+    
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const separator = isIOS ? '&' : '?';
+    
+    const uri = `sms:${encodeURIComponent(adminInputValue)}${separator}body=${encodeURIComponent(message)}`;
+    window.location.href = uri;
+
     setCheckoutAction('none');
     setAdminInputValue('');
   };
@@ -372,18 +384,24 @@ export function Cart() {
                         value={adminInputValue} 
                         onChange={e => setAdminInputValue(e.target.value)}
                         placeholder="Phone Number" 
-                        className="flex-1 bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-sm outline-none focus:border-brand-blue"
+                        className="flex-1 min-w-[120px] bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-sm outline-none focus:border-brand-blue"
                         autoFocus
                       />
                       <button 
-                        onClick={handleSmsSend}
-                        className="bg-brand-blue text-white px-5 rounded-sm font-semibold flex items-center gap-2 hover:bg-blue-700 transition"
+                        onClick={() => handleSmsSend(true)}
+                        className="bg-brand-blue text-white px-2 sm:px-4 rounded-sm font-semibold flex items-center justify-center hover:bg-brand-blue-hover transition text-xs sm:text-sm whitespace-nowrap"
                       >
-                        <Send size={18} /> Send
+                        With Price
+                      </button>
+                      <button 
+                        onClick={() => handleSmsSend(false)}
+                        className="bg-brand-orange text-white px-2 sm:px-4 rounded-sm font-semibold flex items-center justify-center hover:bg-brand-orange-hover transition text-xs sm:text-sm whitespace-nowrap"
+                      >
+                        No Price
                       </button>
                       <button 
                         onClick={() => { setCheckoutAction('none'); setAdminInputValue(''); setPrintCustomerName(''); }}
-                        className="p-2 border border-gray-200 rounded-sm text-gray-500 hover:bg-gray-100"
+                        className="p-2 border border-gray-200 rounded-sm text-gray-500 hover:bg-gray-100 flex-shrink-0"
                       >
                         <X size={20} />
                       </button>
