@@ -64,6 +64,16 @@ export function AIVoiceAssistant() {
     }
   }, [messages, transcript, isProcessing]);
 
+  // Preload speech synthesis voices
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
+  }, []);
+
   useEffect(() => {
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognitionAPI) {
@@ -150,8 +160,22 @@ export function AIVoiceAssistant() {
            return;
          } catch(e) {
            console.error("PCM playback error", e);
-           resolve(false);
          }
+      }
+      
+      // Fallback to browser TTS if no audioBase64 or playback fails
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'hi-IN';
+        const voices = window.speechSynthesis.getVoices();
+        const indianVoice = voices.find(v => v.lang === 'hi-IN' || v.lang.includes('hi') || v.lang.includes('IN')) || voices[0];
+        if (indianVoice) utterance.voice = indianVoice;
+        utterance.rate = 1.0;
+        utterance.pitch = 1.1;
+        utterance.onend = () => resolve(true);
+        utterance.onerror = () => resolve(false);
+        window.speechSynthesis.speak(utterance);
       } else {
         resolve(false);
       }
@@ -210,8 +234,8 @@ export function AIVoiceAssistant() {
     }
   };
 
-  const processTranscript = async (text: string) => {
-    if (!text.trim()) return;
+  const processTranscript = async (text: string, isGreeting: boolean = false) => {
+    if (!text.trim() && !isGreeting) return;
     
     // Manual stop commands
     const lowerText = text.toLowerCase();
@@ -231,16 +255,18 @@ export function AIVoiceAssistant() {
     setTranscript('');
     transcriptRef.current = '';
     
-    const newHistory = [...messagesRef.current, { role: 'user' as const, text }];
-    setMessages(newHistory);
-    messagesRef.current = newHistory;
+    if (!isGreeting) {
+      const newHistory = [...messagesRef.current, { role: 'user' as const, text }];
+      setMessages(newHistory);
+      messagesRef.current = newHistory;
+    }
 
     try {
       const simplifiedProducts = products.map(p => ({ id: p.id, name: p.name, price: p.price, unit: p.unit }));
       const response = await fetch('/api/voice-assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, products: simplifiedProducts, history: messagesRef.current, cart: itemsRef.current }),
+        body: JSON.stringify({ text: isGreeting ? "" : text, products: simplifiedProducts, history: messagesRef.current, cart: itemsRef.current, isGreeting }),
       });
       
       const contentType = response.headers.get("content-type");
@@ -264,10 +290,12 @@ export function AIVoiceAssistant() {
       let voiceReply = data.reply;
 
       if (data.cartUpdates && Array.isArray(data.cartUpdates)) {
+        let addedAny = false;
         for (const item of data.cartUpdates) {
           const p = products.find(prod => prod.id === item.id);
           if (p) {
             addItem(p, item.quantity || 1);
+            addedAny = true;
           } else if (item.name) {
             const customProduct = {
                id: item.id || `custom-${Date.now()}-${Math.random()}`,
@@ -278,7 +306,11 @@ export function AIVoiceAssistant() {
                image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=200&auto=format&fit=crop'
             };
             addItem(customProduct, item.quantity || 1);
+            addedAny = true;
           }
+        }
+        if (addedAny) {
+          setCartOpen(true);
         }
       }
 
@@ -331,7 +363,9 @@ export function AIVoiceAssistant() {
         onClick={() => {
           setIsOpen(true);
           if (messages.length === 0) {
-            processTranscript("Namaste");
+            processTranscript("", true);
+          } else {
+            startRecognition();
           }
         }}
         className="fixed bottom-24 md:bottom-10 right-4 md:right-10 z-[60] bg-brand-blue text-white p-4 rounded-full shadow-lg hover:bg-brand-blue-hover transition-transform hover:scale-105 flex items-center justify-center animate-bounce-slow"

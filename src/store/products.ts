@@ -36,7 +36,7 @@ export const useProductsStore = create<ProductsStore>((set) => ({
         body: JSON.stringify({
           query: `
             query @inContext(language: ${shopifyLang}) {
-              products(first: 50) {
+              products(first: 250) {
                 edges {
                   node {
                     id

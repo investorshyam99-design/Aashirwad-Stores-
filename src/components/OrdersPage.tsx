@@ -4,10 +4,10 @@ import { db } from '../lib/firebase';
 import { format } from 'date-fns';
 import { Package, Truck, CheckCircle, XCircle, AlertTriangle, Printer, Trash2, Plus, Minus } from 'lucide-react';
 import { formatNumberIntl } from '../i18n/translations';
-import { useI18nStore } from '../store/i18n';
+import { useI18nStore, Language } from '../store/i18n';
 import { useAuthStore } from '../store/auth';
 
-function OrderItemCard({ order, isAdmin, language, updateStatus }: { order: any, isAdmin: boolean, language: string, updateStatus: (id: string, s: string) => void }) {
+function OrderItemCard({ order, isAdmin, language, updateStatus }: { key?: any, order: any, isAdmin: boolean, language: Language, updateStatus: (id: string, s: string) => Promise<void> | void }) {
   const [editingItem, setEditingItem] = useState<number | null>(null);
   const [tempPrice, setTempPrice] = useState<string>('');
   

@@ -35,19 +35,6 @@ export function Footer() {
           <div className="flex flex-col space-y-3">
             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Contact Us</span>
             <ul className="flex flex-col space-y-2">
-              <li className="text-xs text-gray-300 font-medium">
-                <a 
-                  href="https://maps.app.goo.gl/kWa5AxaXn8zVQ8at5?g_st=ac" 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-white transition-colors hover:underline cursor-pointer"
-                >
-                  Aashirwad General Stores<br/>
-                  Near Maharashtra Bank<br/>
-                  Railway Station Road, Pachora
-                </a>
-              </li>
-              <li className="text-xs text-gray-300 font-medium">+91 9028646863</li>
               <li className="pt-2">
                 <a 
                   href="https://wa.me/919028646863" 
