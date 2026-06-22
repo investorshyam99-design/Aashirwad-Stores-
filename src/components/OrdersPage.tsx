@@ -324,13 +324,16 @@ export function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('new');
   const language = useI18nStore(state => state.language);
-  const { user, isAdmin, login } = useAuthStore();
+  const { user, isAdmin, login, isInitializing } = useAuthStore();
 
   useEffect(() => {
+    if (!isAdmin) {
+      setLoading(false);
+      return;
+    }
     const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      // If not admin, you shouldn't see everyone's orders ideally, but for demo we will show it or filter to just their recent orders if we wanted. But the prompt says "let the in admin view and customer view show the order number". We will just label it appropriately.
       setOrders(fetched);
       setLoading(false);
     }, (error) => {
@@ -338,7 +341,7 @@ export function OrdersPage() {
       setLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [isAdmin]);
 
   const updateStatus = async (orderId: string, newStatus: string) => {
     try {
@@ -355,6 +358,31 @@ export function OrdersPage() {
     { id: 'delivered', label: 'Delivered', icon: CheckCircle },
     { id: 'cancelled', label: 'Cancelled', icon: XCircle },
   ];
+
+  if (isInitializing) {
+    return <div className="p-10 text-center text-gray-500">Checking permissions...</div>;
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center p-16 text-center space-y-6 max-w-lg mx-auto mt-10">
+        <AlertTriangle size={64} className="text-gray-300" />
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">Admin Access Required</h2>
+          <p className="text-gray-500 mt-2">You must be signed in as an administrator to view the store orders.</p>
+        </div>
+        {!user ? (
+          <button onClick={login} className="px-6 py-3 bg-brand-blue text-white rounded-xl font-semibold shadow-sm hover:bg-brand-blue-hover transition-colors">
+            Sign In to Continue
+          </button>
+        ) : (
+          <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm font-medium border border-red-100">
+            Account ({user.email}) does not have admin privileges.
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (loading) return <div className="p-10 text-center text-gray-500">Loading orders...</div>;
 

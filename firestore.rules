@@ -39,9 +39,9 @@ service cloud.firestore {
 
     match /orders/{orderId} {
       // Allow read/list so admin can view orders
-      allow read, list: if isAdmin() || (isSignedIn() && existing().userId == request.auth.uid) || true; 
+      allow read, list: if isAdmin(); 
       allow create: if true; 
-      allow update, delete: if isAdmin() || true; // allow demo updating status
+      allow update, delete: if isAdmin();
     }
   }
 }
