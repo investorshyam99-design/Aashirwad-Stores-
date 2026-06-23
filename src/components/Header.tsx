@@ -38,8 +38,19 @@ export function Header() {
                       <p className="text-xs text-gray-500 truncate w-full">{user.email}</p>
                     </div>
                     {isAdmin && (
-                      <div className="px-4 py-2 text-xs font-semibold text-brand-blue bg-blue-50 border-b border-gray-100">
-                        Admin Account
+                      <div className="flex flex-col border-b border-gray-100">
+                        <div className="px-4 py-2 text-xs font-semibold text-brand-blue bg-blue-50">
+                          Admin Panel
+                        </div>
+                        <button 
+                          onClick={() => {
+                            setActiveTab('chats');
+                            setIsMenuOpen(false);
+                          }}
+                          className="px-4 py-3 text-sm text-left text-gray-800 hover:bg-gray-50 font-medium transition-colors"
+                        >
+                          Customer Chats
+                        </button>
                       </div>
                     )}
                     <button 

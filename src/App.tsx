@@ -10,6 +10,7 @@ import { ProductGrid } from './components/ProductGrid';
 import { ProductPage } from './components/ProductPage';
 import { OrdersPage } from './components/OrdersPage';
 import { CollectionsPage } from './components/CollectionsPage';
+import { AdminChatsPage } from './components/AdminChatsPage';
 import { Footer } from './components/Footer';
 import { Cart } from './components/Cart';
 import { AIVoiceAssistant } from './components/AIVoiceAssistant';
@@ -34,7 +35,8 @@ export default function App() {
     <div className="flex flex-col min-h-screen bg-gray-50 pb-16">
       <Header />
       <main className="flex-grow">
-        {activeTab === 'orders' ? <OrdersPage /> : 
+        {activeTab === 'chats' ? <AdminChatsPage /> :
+         activeTab === 'orders' ? <OrdersPage /> : 
          activeTab === 'collection' ? <CollectionsPage /> :
          (selectedProductId ? <ProductPage /> : <ProductGrid />)}
       </main>

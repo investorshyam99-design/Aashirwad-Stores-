@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type TabType = 'home' | 'search' | 'collection' | 'orders';
+export type TabType = 'home' | 'search' | 'collection' | 'orders' | 'chats';
 
 interface UIState {
   activeTab: TabType;

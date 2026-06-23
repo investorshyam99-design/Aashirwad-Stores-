@@ -11,6 +11,15 @@ interface AuthState {
   logout: () => Promise<void>;
 }
 
+export const getGuestId = () => {
+  let guestId = localStorage.getItem('guestId');
+  if (!guestId) {
+    guestId = 'guest_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+    localStorage.setItem('guestId', guestId);
+  }
+  return guestId;
+};
+
 export const useAuthStore = create<AuthState>((set) => {
   let isListening = false;
 

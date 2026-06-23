@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCartStore } from '../store/cart';
 import { useI18nStore } from '../store/i18n';
-import { useAuthStore } from '../store/auth';
+import { useAuthStore, getGuestId } from '../store/auth';
 import { getTranslation, formatNumberIntl } from '../i18n/translations';
 import { X, ShoppingBag, Printer, MessageSquare, Send, ArrowLeft } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -210,11 +210,12 @@ export function Cart() {
 
                    await addDoc(collection(db, 'orders'), {
                      orderId,
+                     userId: useAuthStore.getState().user?.uid || getGuestId(),
                      customerName,
                      customerPhone,
-                     items: items.map(i => ({ id: i.id, name: i.name, quantity: i.quantity, price: i.price, image: i.image })),
+                     items: items.map(i => ({ id: i.id || '', name: i.name || '', quantity: i.quantity || 1, price: i.price || 0, image: i.image || '' })),
                      totalAmount: parseFloat(totalPrice),
-                     status: 'new',
+                     status: 'Order Received',
                      createdAt: Date.now(),
                      updatedAt: Date.now()
                    });
