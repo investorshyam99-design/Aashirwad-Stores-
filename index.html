@@ -8,6 +8,26 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <div style="width: 0; height: 0;" id="VG_OVERLAY_CONTAINER">
+        <!-- Here is where renders the widget. -->
+    </div>
+    <script defer>
+        (function() {
+            window.VG_CONFIG = {
+                ID: "Qwd3Mbvvtlst6D9Qk6Ku", // YOUR AGENT ID
+                region: 'na', // YOUR ACCOUNT REGION 
+                render: 'bottom-right', // can be 'bottom-left' or 'bottom-right'
+                modalMode: false, // Set this to 'true' to open the widget in modal mode
+                stylesheets: [
+                    "https://cdn.convocore.ai/vg_live_build/styles.css",
+                ],
+            }
+            var VG_SCRIPT = document.createElement("script");
+            VG_SCRIPT.src = "https://cdn.convocore.ai/vg_live_build/vg_bundle.js";
+            VG_SCRIPT.defer = true;
+            document.body.appendChild(VG_SCRIPT);
+        })()
+    </script>
   </body>
 </html>
 

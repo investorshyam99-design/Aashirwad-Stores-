@@ -13,7 +13,6 @@ import { CollectionsPage } from './components/CollectionsPage';
 import { AdminChatsPage } from './components/AdminChatsPage';
 import { Footer } from './components/Footer';
 import { Cart } from './components/Cart';
-import { AIVoiceAssistant } from './components/AIVoiceAssistant';
 import { useCartStore } from './store/cart';
 import { useProductsStore } from './store/products';
 import { useUIStore } from './store/ui';
@@ -41,7 +40,6 @@ export default function App() {
          (selectedProductId ? <ProductPage /> : <ProductGrid />)}
       </main>
       <Cart />
-      <AIVoiceAssistant />
       <Footer />
       
       {/* Bottom Navigation */}
